@@ -1,0 +1,720 @@
+p
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PONG GAME</title>
+    <style>
+        #normal{
+            position: fixed; 
+            display: block;
+            background-color: white; 
+            width: 220px; 
+            height: 40px;
+            border: 6px double black;
+            text-align: center;
+            font-size: 34px;
+            font-family: "serif";
+            padding: 20px;
+            cursor: pointer;
+
+            margin: auto;
+            top: 28%;
+            left: 50%;
+            transform: translate(-50%,0);
+        }
+        #normal:hover{
+            border: 4px double blueviolet;
+        }
+        #impossible{
+            position: fixed; 
+            display: block;
+            background-color: white; 
+            width: 220px; 
+            height: 40px;
+            border: 6px double black;
+            text-align: center;
+            font-size: 34px;
+            font-family: "serif";
+            padding: 20px;
+            cursor: pointer;
+
+            margin: auto;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%,0)
+        }
+        #impossible:hover{
+            border: 4px double blueviolet;
+        }
+        #options{
+            position: fixed; 
+            display: block;
+            background-color: white; 
+            width: 220px; 
+            height: 40px;
+            border: 6px double black;
+            text-align: center;
+            font-size: 34px;
+            font-family: "serif";
+            padding: 20px;
+            cursor: pointer;
+
+            margin: auto;
+            top: 62%;
+            left: 50%;
+            transform: translate(-50%,0)
+        }
+        #options:hover{
+            border: 4px double blueviolet;
+        }
+        .option{
+            position: fixed; 
+            display: none;
+            background-color: white; 
+            width: 210px; 
+            height: 20px;
+            border: 6px double black;
+            text-align: center;
+            font-size: 18px;
+            font-family: "serif";
+            padding: 10px;
+            cursor: pointer;
+            user-select: none;
+
+            margin: auto;
+            left: 50%;
+            transform: translate(-50%,0)
+        }
+        .option:hover{
+            border: 4px double blueviolet;
+        }
+        #backMenu{
+            position: fixed; 
+            display: none;
+            background-color: white; 
+            width: 180px; 
+            height: 30px;
+            border: 6px double black;
+            text-align: center;
+            font-size: 20px;
+            font-family: "serif";
+            padding: 10px;
+            cursor: pointer;
+
+            margin: auto;
+            top: 80%;
+            left: 50%;
+            transform: translate(-50%,0);
+        }
+        #backMenu:hover{
+            border: 4px double blueviolet;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" style="position: absolute; background-color: black; left: 0px; top: 0px;"></canvas>
+    <div id="normal" onclick="setMode('normal')">NORMAL</div>
+    <div id="impossible" onclick="setMode('impossible')">IMPOSSIBLE</div>
+    <div id="options" onclick="optionsClicked()">OPTIONS</div>
+
+    <div class="option" style="top: 8%" onclick="changeOptions('ballColor')">BALL COLOR: white</div>
+    <div class="option" style="top: 18%; background-color: rgb(210, 210, 210);" onclick="changeOptions('ballSize')">BALL SIZE: normal</div>
+    <div class="option" style="top: 28%" onclick="changeOptions('ballSpeed')">BALL SPEED: slow</div>
+    <div class="option" style="top: 38%" onclick="changeOptions('padColor')">PAD COLOR: white</div>
+    <div class="option" style="top: 48%; background-color: rgb(210, 210, 210);" onclick="changeOptions('padSize')">PAD SIZE: normal</div>
+    <div class="option" style="top: 58%; background-color: rgb(230, 230, 230);" onclick="changeOptions('maxPoints')">WIN POINT: 3</div>
+    <div class="option" style="top: 68%" onclick="changeOptions('restore')">RESTORE OPTIONS</div>
+    <div class="option" style="top: 82%" onclick="changeOptions('save')">SAVE</div>
+
+    <div id="backMenu" onclick="backToMenu()">BACK TO MENU</div>
+
+    <script>
+        let canvas = document.getElementById("canvas");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let c = canvas.getContext("2d");
+
+        c.fillStyle = "white";
+
+        let colors = ["white","yellow","red","green","blue","pink","orange","purple","lime","cyan"];
+        let mode = "menu";
+        
+        function drawTitle(){
+    c.font = "83px Serif";
+    c.fillStyle = "white";
+    c.textAlign = "center";
+
+    c.fillText("P  O  N  G",canvas.width/2,canvas.height*0.15)
+}
+
+let listDivID = ["normal","impossible","options"]
+function setMode(modeSelected){
+    player.score = 0;
+    enemy.score = 0;
+
+    player.color = colors[options.padColorIndex];
+    player.h = (options.padSizeIndex)*22+70;
+    ball = new Ball(canvas.width/2,canvas.height/2,(options.ballSizeIndex)*4+7,(options.ballSizeIndex)*3+6,(options.ballSpeedIndex)*3+9);
+    ball.color = colors[options.ballColorIndex];
+    enemy = new AI(modeSelected);
+    mode = "game";
+
+    for(let i=0;i<listDivID.length;i++){
+        document.getElementById(listDivID[i]).style.display = "none";
+    }
+}
+
+let optionsList = document.getElementsByClassName("option");
+function optionsClicked(){
+    for(let i=0;i<listDivID.length;i++){
+        document.getElementById(listDivID[i]).style.display = "none";
+    }
+    for(let i=0;i<optionsList.length;i++){
+        optionsList[i].style.display = "block";
+    }
+    mode = "options";
+}
+
+let options = {
+    ballColorIndex: 0,
+    ballSizeIndex: 1,
+    ballSpeedIndex: 0,
+    padColorIndex: 0,
+    padSizeIndex: 1,
+    maxPoints: 3
+}
+let sizeList = ["small","normal","big","very big"];
+let speedList = ["slow","medium","fast","SPEEEEED"];
+
+function changeOptions(chosenOption){
+    switch(chosenOption){
+        case "ballColor":
+            options.ballColorIndex++;
+            if(options.ballColorIndex>=colors.length) options.ballColorIndex = 0;
+            break;
+        case "ballSize":
+            options.ballSizeIndex++;
+            if(options.ballSizeIndex>=sizeList.length) options.ballSizeIndex = 0;
+            break;
+        case "ballSpeed":
+            options.ballSpeedIndex++;
+            if(options.ballSpeedIndex>=speedList.length) options.ballSpeedIndex = 0;
+            break;
+        case "padColor":
+            options.padColorIndex++;
+            if(options.padColorIndex>=colors.length) options.padColorIndex = 0;
+            break;
+        case "padSize":
+            options.padSizeIndex++;
+            if(options.padSizeIndex>=sizeList.length) options.padSizeIndex = 0;
+            break;
+        case "maxPoints":
+            options.maxPoints++;
+            if(options.maxPoints>7) options.maxPoints = 1;
+            break;
+        case "restore":
+            options.ballColorIndex = 0;
+            options.ballSizeIndex = 1;
+            options.ballSpeedIndex = 0;
+            options.padColorIndex = 0;
+            options.padSizeIndex = 1;
+            options.maxPoints = 3;
+            break;
+        case "save":
+            for(let i=0;i<listDivID.length;i++){
+                document.getElementById(listDivID[i]).style.display = "block";
+            }
+            for(let i=0;i<optionsList.length;i++){
+                optionsList[i].style.display = "none";
+            }
+            mode = "menu";
+
+    }
+    optionsList[0].innerHTML = "BALL COLOR: "+colors[options.ballColorIndex];
+    optionsList[0].style.backgroundColor = colors[options.ballColorIndex];
+    
+    optionsList[1].innerHTML = "BALL SIZE: "+sizeList[options.ballSizeIndex];
+    optionsList[1].style.backgroundColor = "rgb("+(255-options.ballSizeIndex*45)+","+(255-options.ballSizeIndex*45)+","+(255-options.ballSizeIndex*45)+")";
+    
+    optionsList[2].innerHTML = "BALL SPEED: "+speedList[options.ballSpeedIndex];
+    optionsList[2].style.backgroundColor = "rgb("+(255-options.ballSpeedIndex*45)+","+(255-options.ballSpeedIndex*45)+","+(255-options.ballSpeedIndex*45)+")" 
+    
+    optionsList[3].innerHTML = "PAD COLOR: "+colors[options.padColorIndex];
+    optionsList[3].style.backgroundColor = colors[options.padColorIndex];
+    
+    optionsList[4].innerHTML = "PAD SIZE: "+sizeList[options.padSizeIndex];
+    optionsList[4].style.backgroundColor = "rgb("+(255-options.padSizeIndex*45)+","+(255-options.padSizeIndex*45)+","+(255-options.padSizeIndex*45)+")"
+    
+    optionsList[5].innerHTML = "WIN POINT: "+options.maxPoints;
+    optionsList[5].style.backgroundColor = "rgb("+(255-options.maxPoints*25)+","+(255-options.maxPoints*25)+","+(255-options.maxPoints*25)+")"
+    
+}
+
+function backToMenu(){
+    for(let i=0;i<listDivID.length;i++){
+        document.getElementById(listDivID[i]).style.display = "block";
+    }
+    document.getElementById("backMenu").style.display = "none"; 
+    mode = "menu";
+}
+
+class ParticuleEffect{
+    constructor(x,y,targetX,targetY,size,color,millisecondsAlive){
+        this.birth = new Date().getTime();
+        this.dead = false;
+
+        this.orX = x;
+        this.orY = y;
+
+        this.x = x;
+        this.y = y;
+
+        this.targetX = targetX;
+        this.targetY = targetY;
+
+        this.size = size;
+
+        this.color = color;
+
+        this.millisecondsAlive = millisecondsAlive;
+    }
+    lifePercentage(){
+        return (new Date().getTime()-this.birth)/this.millisecondsAlive;
+    }
+    draw(){
+        c.globalAlpha = 1-this.lifePercentage();
+        c.fillStyle = this.color;
+        c.fillRect(this.x,this.y,this.size*(1-this.lifePercentage()),this.size*(1-this.lifePercentage()));
+        
+    }
+    move(){
+        this.x += (this.targetX-this.orX)*this.lifePercentage();
+        this.y += (this.targetY-this.orY)*this.lifePercentage();
+    }
+    update(){
+        this.move();
+        this.draw();
+        if(this.lifePercentage()>1){
+            this.dead = true;
+        }
+    }
+
+}
+let particules = [];
+
+function updateParticules(){
+    for(let i=0;i<particules.length;i++){
+        if(particules[i].dead){
+            particules.splice(i,1);
+        }else{
+            particules[i].update();
+        }
+    }
+    c.globalAlpha = 1;
+}
+class Ball{
+    constructor(x,y,w,h,speed){
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.color = "white";
+
+        this.speed = speed;
+        this.extraSpeed = 1;
+
+        this.dY = 0;
+        this.dX = Math.sqrt(speed**2-this.dY**2);
+        this.xDir = 1;
+        this.yDir = Math.round(Math.random())*2-1;
+        
+        this.canMove = true;
+    }
+
+    resetBall(){
+        this.x = canvas.width/2;
+        this.y = canvas.height/2;
+        this.extraSpeed = 1;
+        this.dX = this.speed;
+        this.dY = 0;
+        
+    }
+
+    draw(){
+        c.fillStyle = this.color;
+        c.fillRect(this.x, this.y, this.w, this.h);
+    }
+
+    move(){
+        //Player collisons
+        if(this.x>=0&&this.x<=player.w&&this.y+this.h>=player.y&&this.y<=player.y+player.h){
+            this.xDir = 1;
+
+            if(this.y+this.h/2-(player.y+player.h/2)>=0) this.yDir = 1
+            else this.yDir = -1;
+
+            this.dY = ((Math.abs(this.y+this.h/2-(player.y+player.h/2)))*(this.speed)/(player.h/2+ball.h/2))*0.98;
+            this.dX = Math.sqrt(Math.abs(this.speed**2-this.dY**2));
+
+            this.x += (this.dX * this.xDir)*1.5;
+            this.y += (this.dY * this.yDir)*1.5;
+
+            console.log("pHit");
+            if(ball.extraSpeed<=4) this.extraSpeed += 0.075;
+
+
+            if(enemy.difficulty=="impossible"){
+                enemy.targetPos = undefined;
+            }
+
+            //Partciules!
+            for(let i=0;i<24;i++){
+                particules.push(new ParticuleEffect(this.x+this.w/2,this.y+this.h/2,
+                    this.x+this.h/2+Math.random()*4,this.y+this.h/2+Math.random()*14-7,3+Math.random()*1.5+options.ballSizeIndex/2,player.color,1000))
+            }
+
+        }else if(this.x+this.w<=canvas.width&&this.x+this.w>=enemy.x&&this.y+this.h/2>=enemy.y&&this.y+this.h/2<=enemy.y+enemy.h){
+            this.xDir = -1;
+
+            if(this.y+this.h/2-(enemy.y+enemy.h/2)>=0) this.yDir = 1
+            else this.yDir = -1;
+
+            this.dY = ((Math.abs(this.y+this.h/2-(enemy.y+enemy.h/2)))*(this.speed)/(enemy.h/2+ball.h/2))*0.98;
+            this.dX = Math.sqrt(Math.abs(this.speed**2-this.dY**2));
+
+            this.x += (this.dX * this.xDir)*1.5;
+            this.y += (this.dY * this.yDir)*1.5;
+
+            console.log("eHit");
+
+            if(enemy.difficulty=="impossible"){
+                enemy.targetPos = canvas.height/2-this.h/2;
+            }
+
+            //Partciules!
+            for(let i=0;i<24;i++){
+                particules.push(new ParticuleEffect(this.x+this.w/2,this.y+this.h/2,
+                    this.x+this.h/2+Math.random()*-4,this.y+this.h/2+Math.random()*14-7,3+Math.random()*1.5+options.ballSizeIndex/2,enemy.color,1000))
+            }
+        }
+        //Wall colisions
+        if(this.y+this.h>=canvas.height){
+            this.yDir = -1;
+            for(let i=0;i<28;i++){
+                particules.push(new ParticuleEffect(this.x+this.w/2,this.y+this.h/2,
+                    this.x+this.h/2+Math.random()*14-7,this.y+this.h/2+Math.random()*-6,3+Math.random()*1.5+options.ballSizeIndex/2,colors[Math.floor(Math.random()*colors.length)],1200))
+            }
+            
+        }else if(this.y<=0){
+            this.yDir = 1;
+            for(let i=0;i<28;i++){
+                particules.push(new ParticuleEffect(this.x+this.w/2,this.y+this.h/2,
+                    this.x+this.h/2+Math.random()*14-7,this.y+this.h/2+Math.random()*6,3+Math.random()*1.5+options.ballSizeIndex/2,colors[Math.floor(Math.random()*colors.length)],1200))
+            }
+        }else if(this.x<=0||this.x+this.w>=canvas.width){
+            
+            if(this.x<=0){
+                enemy.score++;
+                for(let i=0;i<29;i++){
+                    lastBallPos = [this.x+this.w,this.y];
+                    particules.push(new ParticuleEffect(lastBallPos[0],lastBallPos[1],lastBallPos[0]+Math.random()*4.5,
+                    lastBallPos[1]+Math.random()*15-7.5,3+Math.random()*2+options.ballSizeIndex/2*1.1,ball.color,1000+Math.random()*8000));
+                }
+                enemy.targetPos = undefined;
+            }else{
+                player.score++;
+                for(let i=0;i<29;i++){
+                    lastBallPos = [this.x,this.y];
+                    particules.push(new ParticuleEffect(lastBallPos[0],lastBallPos[1],lastBallPos[0]+Math.random()*-4.5,
+                    lastBallPos[1]+Math.random()*15-7.5,3+Math.random()*2+options.ballSizeIndex*1.1,ball.color,1000+Math.random()*8000));
+                }
+                
+            }
+            
+            this.xDir *= -1;
+            this.resetBall()
+            
+            
+        }
+        //Basic movement
+        if(this.canMove){
+            let moveNormally = true;
+            if(this.x+(this.dX*this.extraSpeed) * this.xDir<=0 && this.x>=player.w){            
+                this.y = (this.dY*this.yDir)/(this.dX*this.xDir) * player.w + (this.y-((this.dY*this.yDir)/(this.dX*this.xDir))*this.x);
+                this.x = player.w;
+                moveNormally = false;
+                console.warn("y",this.y);
+            }else if(this.x+this.w+(this.dX*this.extraSpeed) * this.xDir>=canvas.width-enemy.w && this.x+this.w<canvas.width-enemy.w){
+                this.y = (this.dY*this.yDir)/(this.dX*this.xDir) * (canvas.width-enemy.w-ball.w) + (this.y-((this.dY*this.yDir)/(this.dX*this.xDir))*this.x);
+                this.x = canvas.width-enemy.w-ball.w;
+                console.warn("y",this.y);
+                moveNormally = false;
+            }else if(this.y+(this.dY*this.extraSpeed) * this.yDir<=0){            
+                this.x = enemy.calculateAffineX(0,(this.dY*this.yDir)/(this.dX*this.xDir),enemy.calculateAffineB(this.y,(this.dY*this.yDir)/(this.dX*this.xDir),this.x));
+                this.y = 0;
+                console.warn("x",this.x);
+                moveNormally = false;
+            }else if(this.y+(this.dY*this.extraSpeed) * this.yDir>=canvas.height-this.h){            
+                this.x = enemy.calculateAffineX(canvas.height-this.h,(this.dY*this.yDir)/(this.dX*this.xDir),enemy.calculateAffineB(this.y,(this.dY*this.yDir)/(this.dX*this.xDir),this.x));
+                this.y = canvas.height-this.h;
+                console.warn(this.x,this.y);
+                moveNormally = false;
+            }
+            if(moveNormally){
+                this.x += (this.dX*this.extraSpeed) * this.xDir;
+                this.y += (this.dY*this.extraSpeed) * this.yDir;
+            }
+            
+        
+            
+        }
+        //PARTICULES!
+        particules.push(new ParticuleEffect(this.x+Math.random()*this.w,this.y+Math.random()*this.h,
+        this.x+this.h/2+Math.random()*3,this.y+this.h/2+Math.random()*10-5,2+options.ballSizeIndex/2,this.color,500));
+    }
+
+    update(){
+        this.move();
+        this.draw();
+    }
+}
+
+let ball = new Ball(canvas.width/2,canvas.height/2,12,12,9);
+
+//_____________________________________________________________________________________
+
+let player = {
+    w: 22, 
+    h: 105, //105
+    x: 0,
+    y: canvas.height/2 - 80/2,
+    
+    score: 0,
+    color: "white",
+
+    draw: ()=>{
+        c.fillStyle = player.color
+        c.fillRect(player.x,player.y,player.w,player.h)}
+}
+
+canvas.addEventListener("mousemove",mouseIsMoving);
+function mouseIsMoving(e){
+    if(e.offsetY <= player.h/2){
+        player.y = 0;
+    }else if(e.offsetY>=canvas.height-player.h/2){
+        player.y = canvas.height-player.h;
+    }else{
+        player.y = e.offsetY - player.h/2;
+    }
+    
+    
+}
+
+//_____________________________________________________________________________________
+class AI{
+    constructor(difficulty){
+        this.y = player.y;
+        this.w = player.w;
+        this.h = player.h;
+        this.x = canvas.width-this.w;
+
+        this.score = 0;
+        this.color = player.color;
+
+
+        this.targetPos = undefined;
+        this.ballsDistanceList = [];
+
+        this.difficulty = difficulty;
+        if(this,difficulty == "normal") this.speed = 6.25;
+        else if(this.difficulty == "impossible") this.speed = 11;
+    }
+
+    draw(){
+        c.fillStyle = this.color;
+        c.fillRect(this.x,this.y,this.w,this.h);
+    }
+
+    calculateAffineB(y,a,x){
+        //y = ax+b    y-ax = b
+        return y-(a*x);
+    }
+    calculateAffineY(a,x,b){
+        //y = ax + b
+        return (a*x) +b;
+    }
+    calculateAffineX(y,a,b){
+        //y = ax+b   (y-b)/a
+        return (y-b)/a;
+    }
+
+
+    calculateTrajectory(){
+        let a = (ball.dY*ball.yDir)/(ball.xDir*ball.dX);
+        let x = ball.x;
+        let y = ball.y-ball.h/2;
+        let b = this.calculateAffineB(y,a,x);
+
+        let continueLoop = true;
+        let testTarget;
+        let count=0;
+
+        while(continueLoop){
+            testTarget = this.calculateAffineY(a,canvas.width-ball.w-enemy.w,b);
+            if(testTarget>=0&&
+            testTarget<=canvas.height){
+                console.log("trajectory calculated")
+                return testTarget-this.h/2; 
+            }else{
+                if(a>0){
+                    x = this.calculateAffineX(canvas.height-ball.h,a,b);
+                    y = canvas.height-ball.h
+                }else{
+                    x = this.calculateAffineX(0,a,b);
+                    y = 0;
+                }
+                a *= -1;
+                b = this.calculateAffineB(y,a,x);
+            }
+
+            //
+            if(count>30){
+                console.log("Impossible AI error");
+                return 100;
+            }
+            count++;
+        }
+        
+    }
+
+    move(){
+        if(this.difficulty=="normal"){
+            this.targetPos = ball.y+ball.h/2-this.h/2;        
+        }else if(this.difficulty == "impossible" && this.targetPos == undefined && ball.x>player.w){
+            this.targetPos = this.calculateTrajectory()
+        }
+        if(this.difficulty=="normal"){
+            if(this.y<=this.targetPos-this.h*0.4 && this.y<=canvas.height-this.h){
+                this.y += this.speed;
+            }else if(this.y>=this.targetPos+this.h*0.4 && this.y>=0){
+                this.y -= this.speed;
+            }
+        }else if(this.difficulty == "impossible"){
+            if(this.y<=this.targetPos-this.h*0.2 && this.y<=canvas.height-this.h){
+                this.y += this.speed;
+            }else if(this.y>=this.targetPos+this.h*0.2 && this.y>=0){
+                this.y -= this.speed;
+            }
+        }
+        
+        
+    }
+    update(){
+        this.draw();
+        this.move();
+    }
+}
+let enemy = new AI("impossible");
+//_________________________________________________
+let middleLine = {
+    spacing: 20,
+    width: 2,
+    height: 40
+}
+function drawMiddleLine(){
+    for(let i=0;i<canvas.height;i+=middleLine.spacing+middleLine.height){
+        c.fillStyle = player.color;
+        c.globalAlpha = 0.75;
+        c.fillRect(canvas.width/2-middleLine.width/2,i,middleLine.width,middleLine.height);
+        c.globalAlpha = 1;
+    }
+}
+//_________________________________________________
+function drawScores(){
+    c.textAlign = "center";
+    c.font = "75px Arial";
+
+    c.fillStyle = player.color;
+    c.globalAlpha = 0.2+(0.8*(player.score)/(options.maxPoints));
+    c.fillText(player.score,canvas.width*0.3,canvas.height/2);
+
+    c.globalAlpha = 0.2+(0.8*(enemy.score)/(options.maxPoints));
+    c.fillText(enemy.score,canvas.width*0.7,canvas.height/2);
+
+    c.globalAlpha = 1;
+}
+//__________________________________________________
+let lastBallPos = [];
+function checkGameOver(){
+    if(enemy.score>=options.maxPoints){
+        mode = "enemyWin";
+        for(let i=0;i<68;i++){
+            particules.push(new ParticuleEffect(lastBallPos[0],lastBallPos[1],lastBallPos[0]+Math.random()*8,
+                lastBallPos[1]+Math.random()*20-10,5+Math.random()*2+options.ballSizeIndex*1.5,ball.color,3400+Math.random()*6000));
+        }
+        document.getElementById("backMenu").style.display = "block";
+    }else if(player.score>=options.maxPoints){
+        mode = "playerWin";
+        for(let i=0;i<68;i++){
+            particules.push(new ParticuleEffect(lastBallPos[0],lastBallPos[1],lastBallPos[0]+Math.random()*-8,
+                lastBallPos[1]+Math.random()*20-10,5+Math.random()*2+options.ballSizeIndex*1.5,ball.color,3400+Math.random()*6000));
+        }
+        document.getElementById("backMenu").style.display = "block";
+    }
+}
+//_________________________________________________
+function drawLosingScreen(){
+    c.fillStyle = ball.color;
+    c.font = "82px Serif"
+    c.fillText("YOU LOSE",canvas.width/2,canvas.height*0.28);
+
+    c.fillText(player.score+" - "+enemy.score,canvas.width/2,canvas.height*0.7);
+
+    c.fillText("MODE: "+enemy.difficulty,canvas.width/2,canvas.height*0.5)
+}
+function drawWinningScreen(){
+    c.fillStyle = ball.color;
+    c.font = "82px Serif"
+    c.fillText("YOU WIN",canvas.width/2,canvas.height*0.28);
+    
+    c.fillText(player.score+" - "+enemy.score,canvas.width/2,canvas.height*0.7);
+
+    c.fillText("MODE: "+enemy.difficulty,canvas.width/2,canvas.height*0.5)
+}
+
+function draw(){
+    c.clearRect(0,0,canvas.width,canvas.height);
+
+    updateParticules()
+    if(mode=="game"){
+        drawScores();
+        drawMiddleLine();
+        ball.update();
+
+        player.draw();
+        enemy.update();
+
+        checkGameOver();
+    }else if(mode=="menu"){
+        drawTitle();
+    }else if(mode=="enemyWin"){
+        drawLosingScreen();
+    }else if(mode=="playerWin"){
+        drawWinningScreen();
+    }
+
+    
+    
+}
+function game(){
+    requestAnimationFrame(game);
+    draw();
+}
+game()
+    </script>
+    
+</body>
+</html>
